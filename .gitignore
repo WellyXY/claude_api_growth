@@ -1,0 +1,16 @@
+# Brainstorming session artifacts (generated)
+.superpowers/
+
+# Claude Code local settings (machine-specific)
+.claude/settings.local.json
+.claude/cache/
+.claude/*.bak.*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp

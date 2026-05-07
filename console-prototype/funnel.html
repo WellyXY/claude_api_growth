@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quickstart · Marketing Trend Research</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;500;600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --sidebar: #0f0f0f;
+      --notes-bg: #131313;
+      --card: #141414;
+      --card-hover: #1a1a1a;
+      --border: #262626;
+      --border-soft: #1f1f1f;
+      --text: #e5e5e5;
+      --text-muted: #8a8a8a;
+      --text-dim: #5a5a5a;
+      --accent: #cc785c;
+      --good: #6dc77d;
+    }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      min-width: 1500px;
+      padding-top: 32px;
+    }
+    .serif { font-family: 'Source Serif 4', Georgia, serif; letter-spacing: -0.01em; }
+    .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+    /* Scenario nav */
+    .scenario-bar {
+      position: fixed; top: 0; left: 0; right: 0;
+      background: rgba(15,15,15,0.95); backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border-soft);
+      padding: 6px 16px;
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 11px; color: #888; z-index: 100;
+    }
+    .scenario-step {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 3px 10px; border-radius: 12px;
+      cursor: pointer; text-decoration: none; color: #888;
+    }
+    .scenario-step.active { background: var(--accent); color: white; font-weight: 500; }
+    .scenario-step.done { color: #d4d4d4; }
+    .scenario-step .num {
+      width: 16px; height: 16px; border-radius: 8px;
+      background: rgba(255,255,255,0.1);
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 600;
+    }
+    .scenario-step.active .num { background: rgba(255,255,255,0.25); }
+
+    /* Sidebar */
+    .sidebar-link {
+      display: flex; align-items: center; gap: 10px;
+      padding: 5px 10px 5px 28px; border-radius: 6px;
+      color: #9a9a9a; font-size: 13px; cursor: pointer;
+    }
+    .sidebar-link.active { background: rgba(204,120,92,0.10); color: #fff; }
+    .sidebar-link:hover { background: #1a1a1a; color: #fff; }
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 6px 10px; color: #d4d4d4; font-size: 13px;
+      font-weight: 500; cursor: pointer;
+    }
+    .chevron { font-size: 10px; opacity: 0.6; }
+
+    /* Stepper — Anthropic-style: numbered circles, inline */
+    .stepper {
+      display: flex; align-items: center;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border-soft);
+      font-size: 13px;
+    }
+    .step {
+      display: flex; align-items: center; gap: 8px;
+      color: #6a6a6a;
+      white-space: nowrap;
+    }
+    .step.done { color: #c5c5c5; }
+    .step.active { color: #fff; }
+    .step-num {
+      width: 22px; height: 22px; border-radius: 11px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 600;
+      background: transparent;
+      border: 1px solid #3a3a3a;
+      color: #888;
+      flex-shrink: 0;
+    }
+    .step.done .step-num { background: var(--accent); border-color: var(--accent); color: white; }
+    .step.active .step-num { background: var(--accent); border-color: var(--accent); color: white; box-shadow: 0 0 0 4px rgba(204,120,92,0.18); }
+    .step-meta {
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-size: 11px; color: #6a6a6a;
+      margin-left: 4px;
+    }
+    .step-divider {
+      flex: 0 0 28px; height: 1px;
+      background: #2a2a2a;
+      margin: 0 14px;
+    }
+    .step.done + .step-divider { background: var(--accent); opacity: 0.4; }
+
+    /* Main content layout */
+    .main-content {
+      flex: 1;
+      display: flex; flex-direction: column;
+      min-width: 0;
+      max-width: calc(100vw - 230px - 340px);
+    }
+    .page-header {
+      padding: 18px 24px 14px;
+      border-bottom: 1px solid var(--border-soft);
+    }
+    .page-title {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 2px;
+    }
+    .page-title h1 {
+      font-family: 'Source Serif 4', Georgia, serif;
+      font-size: 18px; font-weight: 500;
+      color: #fff; letter-spacing: -0.005em;
+    }
+    .page-title .breadcrumb {
+      font-size: 13px; color: var(--text-dim);
+    }
+    .page-sub {
+      font-size: 12px; color: var(--text-muted);
+    }
+
+    /* Two-column body */
+    .agent-body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 380px;
+      gap: 0;
+    }
+
+    /* LEFT: builder/chat column */
+    .builder-col {
+      display: flex; flex-direction: column;
+      border-right: 1px solid var(--border-soft);
+      min-width: 0;
+    }
+    .builder-thread {
+      flex: 1;
+      padding: 24px 28px;
+      overflow-y: auto;
+    }
+
+    /* Run banner at top of builder */
+    .run-banner {
+      background: rgba(109,199,125,0.06);
+      border: 1px solid rgba(109,199,125,0.20);
+      border-radius: 8px;
+      padding: 10px 14px;
+      display: flex; align-items: center; gap: 10px;
+      font-size: 12px;
+      margin-bottom: 22px;
+    }
+    .run-banner-dot {
+      width: 8px; height: 8px; border-radius: 4px;
+      background: var(--good);
+      flex-shrink: 0;
+      animation: pulse-good 2s ease-in-out infinite;
+    }
+    @keyframes pulse-good {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(109,199,125,0.4); }
+      50% { box-shadow: 0 0 0 6px rgba(109,199,125,0); }
+    }
+    .run-banner-text { color: #c5c5c5; flex: 1; }
+    .run-banner-text strong { color: var(--good); font-weight: 600; }
+    .run-banner-meta {
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-size: 11px; color: var(--text-dim);
+    }
+
+    /* Messages */
+    .msg { display: flex; gap: 12px; margin-bottom: 22px; }
+    .msg-avatar {
+      width: 26px; height: 26px; border-radius: 13px;
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 600;
+    }
+    .msg-avatar.user { background: #2a2a2a; color: #c5c5c5; }
+    .msg-avatar.agent { background: var(--accent); color: white; }
+    .msg-content {
+      flex: 1; min-width: 0; padding-top: 2px;
+      font-size: 13.5px; line-height: 1.65;
+      color: var(--text);
+    }
+    .msg-content em { color: var(--text-muted); font-style: normal; }
+
+    /* Result content (in agent message) */
+    .result-summary {
+      font-size: 13px; line-height: 1.6;
+      color: var(--text);
+      padding: 12px 14px;
+      background: rgba(204,120,92,0.05);
+      border-left: 2px solid var(--accent);
+      border-radius: 4px;
+      margin: 6px 0 14px;
+    }
+    .result-eyebrow {
+      font-size: 9px; font-weight: 700;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+    .result-h2 {
+      font-family: 'Source Serif 4', Georgia, serif;
+      font-size: 15.5px;
+      color: #fff;
+      font-weight: 500;
+      margin: 16px 0 6px;
+    }
+    .result-table {
+      width: 100%;
+      font-size: 12px;
+      border-collapse: collapse;
+      margin: 6px 0 12px;
+    }
+    .result-table th {
+      text-align: left;
+      font-size: 9.5px;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      padding: 6px 8px;
+      border-bottom: 1px solid var(--border-soft);
+      font-weight: 600;
+    }
+    .result-table td {
+      padding: 7px 8px;
+      border-bottom: 1px solid var(--border-soft);
+      color: var(--text);
+      vertical-align: top;
+    }
+    .result-table .score { font-weight: 600; color: var(--good); }
+    .result-table a, .cite { color: #6da5ff; font-size: 11px; text-decoration: none; }
+    .result-list {
+      font-size: 12.5px;
+      padding-left: 16px;
+      color: var(--text);
+      line-height: 1.6;
+      margin-bottom: 10px;
+    }
+    .result-list li { margin-bottom: 4px; }
+    .cite-pill {
+      font-size: 10px; padding: 1px 6px;
+      background: rgba(109,165,255,0.10);
+      color: #6da5ff;
+      border-radius: 4px;
+      margin-left: 4px;
+    }
+    .result-footer {
+      margin-top: 14px; padding-top: 12px;
+      border-top: 1px solid var(--border-soft);
+      display: flex; flex-direction: column; gap: 5px;
+      font-size: 11.5px; color: var(--text-muted);
+    }
+    .result-footer .ok { display: inline-flex; align-items: center; gap: 6px; }
+    .result-footer .ok::before { content: '✓'; color: var(--good); font-weight: 700; }
+    .result-footer .ok strong { color: #fff; }
+
+    /* Recurring CTA inside the thread */
+    .recurring-cta {
+      background: linear-gradient(135deg, rgba(204,120,92,0.14), rgba(204,120,92,0.04));
+      border: 1px solid rgba(204,120,92,0.40);
+      border-radius: 10px;
+      padding: 14px 16px;
+      display: flex; align-items: center; gap: 14px;
+      margin: 10px 0 22px;
+    }
+    .recurring-cta-icon {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      background: rgba(204,120,92,0.18);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .recurring-cta-text { flex: 1; font-size: 13px; line-height: 1.5; }
+    .recurring-cta-text .head { color: #fff; font-weight: 600; margin-bottom: 2px; }
+    .recurring-cta-text .sub { color: var(--text-muted); font-size: 12px; }
+    .recurring-cta-btn {
+      background: var(--accent); color: white;
+      font-size: 12.5px; font-weight: 600;
+      padding: 7px 14px; border-radius: 6px;
+      cursor: pointer; text-decoration: none;
+      flex-shrink: 0;
+    }
+
+    /* Composer at bottom of builder */
+    .composer-wrap {
+      padding: 14px 24px 22px;
+      border-top: 1px solid var(--border-soft);
+    }
+    .composer {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .composer-input {
+      font-size: 13.5px;
+      color: var(--text-dim);
+      min-height: 24px;
+    }
+    .composer-row {
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .composer-tools {
+      display: flex; gap: 12px; align-items: center;
+      font-size: 11.5px; color: var(--text-dim);
+    }
+    .composer-send {
+      width: 28px; height: 28px;
+      border-radius: 7px;
+      background: var(--accent);
+      color: white;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+    }
+
+    /* RIGHT: YAML card column */
+    .yaml-col {
+      background: var(--bg);
+      padding: 24px 22px;
+      display: flex; flex-direction: column;
+      min-width: 0;
+    }
+    .yaml-card {
+      background: var(--card);
+      border: 1px solid var(--border-soft);
+      border-radius: 10px;
+      overflow: hidden;
+      position: sticky;
+      top: 56px;
+    }
+    .yaml-card-header {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border-soft);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .yaml-card-title {
+      display: flex; align-items: center; gap: 8px;
+    }
+    .yaml-card-title .back {
+      color: var(--text-dim); cursor: pointer; font-size: 14px;
+    }
+    .yaml-card-title h3 {
+      font-size: 13px; font-weight: 600; color: #fff;
+    }
+    .yaml-card-title .pill {
+      font-size: 10px;
+      padding: 1px 7px; border-radius: 8px;
+      background: rgba(255,255,255,0.05);
+      color: var(--text-muted);
+      letter-spacing: 0.3px;
+    }
+    .yaml-use-btn {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 4px 10px;
+      border-radius: 5px;
+      font-size: 11px; font-weight: 500;
+      cursor: pointer;
+    }
+    .yaml-use-btn:hover { background: #1a1a1a; }
+
+    .yaml-tabs {
+      padding: 8px 14px 0;
+      display: flex; gap: 2px;
+      border-bottom: 1px solid var(--border-soft);
+    }
+    .yaml-tab {
+      font-size: 11.5px; font-weight: 500;
+      padding: 6px 10px;
+      color: var(--text-dim);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+    }
+    .yaml-tab.active {
+      color: #fff;
+      border-bottom-color: var(--accent);
+    }
+
+    .yaml-viewer {
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-size: 11.5px;
+      line-height: 1.7;
+      padding: 14px 16px;
+      max-height: 480px;
+      overflow-y: auto;
+    }
+    .yaml-line { display: flex; }
+    .yaml-num {
+      color: #4a4a4a;
+      margin-right: 14px;
+      width: 20px;
+      text-align: right;
+      flex-shrink: 0;
+      user-select: none;
+    }
+    .yaml-key { color: #9cdcfe; }
+    .yaml-string { color: #ce9178; }
+    .yaml-comment { color: #6a9955; font-style: italic; }
+    .yaml-text { color: #c5c5c5; }
+
+    /* Quality badge */
+    .quality-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 3px 9px;
+      background: rgba(109,199,125,0.10);
+      border: 1px solid rgba(109,199,125,0.30);
+      border-radius: 12px;
+      font-size: 10.5px;
+      font-weight: 500;
+      color: var(--good);
+    }
+
+    /* ====== CONVERSION MODAL ====== */
+    .modal-backdrop {
+      position: fixed;
+      inset: 32px 340px 0 230px;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(6px);
+      z-index: 60;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.25s;
+    }
+    body.notes-hidden .modal-backdrop { right: 0; }
+    body.modal-open .modal-backdrop { opacity: 1; pointer-events: auto; }
+
+    .convert-modal {
+      position: fixed;
+      top: 50%;
+      left: calc(230px + (100vw - 230px - 340px) / 2);
+      transform: translate(-50%, -50%) scale(0.96);
+      width: 520px;
+      max-height: 86vh;
+      background: #1a1a1a;
+      border: 1px solid rgba(204,120,92,0.30);
+      border-radius: 14px;
+      padding: 26px 28px 22px;
+      z-index: 61;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.7);
+      overflow-y: auto;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.25s, transform 0.25s;
+    }
+    body.notes-hidden .convert-modal {
+      left: calc(230px + (100vw - 230px) / 2);
+    }
+    body.modal-open .convert-modal {
+      opacity: 1; pointer-events: auto;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    .modal-eyebrow {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 1.4px;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .modal-eyebrow::before { content: '✦'; font-size: 13px; letter-spacing: 0; }
+    .modal-title {
+      font-family: 'Source Serif 4', Georgia, serif;
+      font-size: 24px; font-weight: 500;
+      color: #fff; margin-bottom: 6px;
+      letter-spacing: -0.015em;
+    }
+    .modal-sub {
+      font-size: 13px; color: var(--text-muted);
+      line-height: 1.55; margin-bottom: 20px;
+    }
+    .modal-section { padding: 14px 0; border-top: 1px solid var(--border-soft); }
+    .modal-section-label {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 10px; font-weight: 600;
+      letter-spacing: 1.2px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .modal-section-label .detected-pill {
+      font-size: 9px; font-weight: 600;
+      padding: 2px 7px; border-radius: 8px;
+      background: rgba(204,120,92,0.15);
+      color: var(--accent);
+    }
+    .modal-section-value { font-size: 14px; color: #f0eee6; font-weight: 500; }
+    .modal-section-meta { font-size: 11.5px; color: var(--text-dim); margin-top: 4px; }
+    .cost-free { font-size: 14px; font-weight: 600; color: var(--good); }
+    .modal-actions {
+      display: flex; gap: 10px;
+      justify-content: flex-end;
+      margin-top: 22px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-soft);
+    }
+    .btn-secondary {
+      font-size: 13px; font-weight: 500;
+      padding: 9px 16px; border-radius: 8px;
+      color: var(--text-muted); cursor: pointer;
+      background: transparent; border: none;
+    }
+    .btn-secondary:hover { color: #fff; background: rgba(255,255,255,0.04); }
+    .btn-primary {
+      font-size: 13px; font-weight: 600;
+      padding: 9px 18px; border-radius: 8px;
+      background: var(--accent); color: white; cursor: pointer;
+      text-decoration: none;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .btn-primary:hover { background: #b86a52; }
+
+    /* Notes panel */
+    .notes-panel {
+      width: 340px;
+      background: var(--notes-bg);
+      border-left: 1px solid var(--border-soft);
+      padding: 28px 22px 60px;
+      position: sticky;
+      top: 32px;
+      align-self: flex-start;
+      height: calc(100vh - 32px);
+      overflow-y: auto;
+      flex-shrink: 0;
+      z-index: 70;
+    }
+    body.notes-hidden .notes-panel { display: none; }
+    .notes-panel-eyebrow {
+      font-size: 10px; font-weight: 600;
+      letter-spacing: 1.6px;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .notes-panel-title {
+      font-size: 16px; font-weight: 600;
+      color: #fff; margin-bottom: 6px;
+      letter-spacing: -0.01em;
+    }
+    .notes-panel-sub {
+      font-size: 12px; color: var(--text-muted);
+      line-height: 1.55;
+      margin-bottom: 24px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--border-soft);
+    }
+    .notes-intro {
+      background: #1a1a1a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    .intro-block + .intro-block {
+      margin-top: 14px; padding-top: 14px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+    .intro-label {
+      font-size: 9px; font-weight: 700;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 6px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .intro-label::before { content: ''; width: 4px; height: 4px; border-radius: 2px; background: var(--accent); }
+    .intro-text {
+      font-size: 12.5px;
+      color: #e5e5e5;
+      line-height: 1.55;
+    }
+    .intro-text strong { color: #fff; font-weight: 600; }
+    .note {
+      background: #1a1a1a;
+      border: 1px solid rgba(38,38,38,0.5);
+      border-left: 2px solid rgba(204,120,92,0.35);
+      border-radius: 8px;
+      padding: 14px 16px 15px;
+      margin-bottom: 12px;
+      opacity: 0.42;
+      transition: opacity 0.25s, border-color 0.25s, background 0.25s, transform 0.25s, box-shadow 0.25s;
+      cursor: pointer;
+    }
+    .note:hover {
+      opacity: 1;
+      border-color: var(--border);
+      border-left-color: var(--accent);
+      background: #1c1c1c;
+      transform: translateX(-3px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+    }
+    .note-label {
+      display: inline-block;
+      font-size: 9px; font-weight: 600;
+      letter-spacing: 1.2px;
+      color: var(--accent);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+    .note-title {
+      font-size: 13px; font-weight: 600;
+      color: #fff; margin-bottom: 7px;
+      line-height: 1.4;
+    }
+    .note-body {
+      font-size: 12px; color: #a8a8a8;
+      line-height: 1.55;
+    }
+
+    #connector-svg {
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none; z-index: 49;
+    }
+    .connector-line {
+      stroke: var(--accent); stroke-width: 1.2;
+      stroke-dasharray: 4 4; fill: none; opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .connector-line.active { opacity: 0.75; }
+    .connector-dot { fill: var(--accent); opacity: 0; }
+    .connector-dot.active { opacity: 1; }
+    .connector-dot-halo { fill: var(--bg); opacity: 0; }
+    .connector-dot-halo.active { opacity: 1; }
+    .target-highlight {
+      box-shadow: 0 0 0 1px var(--accent), 0 0 0 4px rgba(204,120,92,0.15) !important;
+      transition: box-shadow 0.2s;
+    }
+    .anno-toggle {
+      position: fixed;
+      bottom: 24px; right: 24px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: #c5c5c5;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 12px; font-weight: 500;
+      display: flex; align-items: center; gap: 8px;
+      cursor: pointer; z-index: 200;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .anno-toggle:hover { border-color: var(--accent); color: #fff; }
+    .anno-toggle .dot { width: 6px; height: 6px; border-radius: 3px; background: var(--accent); }
+    body.notes-hidden .anno-toggle .dot { background: #555; }
+  </style>
+</head>
+<body>
+
+  <div class="scenario-bar">
+    <div class="flex items-center gap-2">
+      <span class="text-[10px] uppercase tracking-wider text-neutral-500 mr-2">PM Prototype</span>
+      <a href="claude-chat.html" class="scenario-step done">
+        <span class="num">1</span><span>Claude.ai chat</span>
+      </a>
+      <span class="text-neutral-700">→</span>
+      <span class="scenario-step active">
+        <span class="num">2</span><span>Run agent · see lift</span>
+      </span>
+      <span class="text-neutral-700">→</span>
+      <a href="index.html" class="scenario-step">
+        <span class="num">3</span><span>Console · Pro Agents</span>
+      </a>
+    </div>
+    <div class="text-[10px] text-neutral-500">Anthropic · API Growth PM prototype</div>
+  </div>
+
+  <div class="flex min-h-screen">
+
+    <!-- Console sidebar -->
+    <aside class="w-[230px] flex flex-col" style="background: var(--sidebar); border-right: 1px solid var(--border-soft); height: calc(100vh - 32px); position: sticky; top: 32px;">
+      <div class="px-4 pt-4 pb-3">
+        <div class="serif text-[17px] font-medium text-white mb-4">Claude Console</div>
+        <button class="w-full flex items-center justify-between px-3 py-2 rounded-md text-sm" style="background: #141414; border: 1px solid var(--border);">
+          <span class="flex items-center gap-2">
+            <span class="text-amber-500">⬢</span><span>Default</span>
+          </span>
+          <span class="text-neutral-500 text-xs">▾</span>
+        </button>
+      </div>
+
+      <nav class="flex-1 px-2 overflow-y-auto">
+        <div class="mb-2">
+          <div class="section-header">
+            <span class="flex items-center gap-2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+              <span>Build</span>
+            </span><span class="chevron">▾</span>
+          </div>
+          <div class="sidebar-link">Workbench</div>
+          <div class="sidebar-link">Files</div>
+          <div class="sidebar-link">Skills</div>
+          <div class="sidebar-link">Batches</div>
+        </div>
+
+        <div class="mb-2">
+          <div class="section-header">
+            <span class="flex items-center gap-2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              <span>Managed Agents</span>
+            </span><span class="chevron">▾</span>
+          </div>
+          <div class="sidebar-link active">Quickstart</div>
+          <div class="sidebar-link">Agents</div>
+          <div class="sidebar-link">Sessions</div>
+          <div class="sidebar-link">Environments</div>
+          <div class="sidebar-link">Credential vaults</div>
+          <div class="sidebar-link justify-between">
+            <span>Memory stores</span>
+            <span class="text-[9px] px-1.5 py-0.5 rounded font-medium" style="background: rgba(96,165,250,0.15); color: #93c5fd;">New</span>
+          </div>
+        </div>
+
+        <div class="mb-2">
+          <div class="section-header">
+            <span class="flex items-center gap-2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+              <span>Analytics</span>
+            </span><span class="chevron">▾</span>
+          </div>
+          <div class="sidebar-link">Usage</div>
+          <div class="sidebar-link">Caching</div>
+        </div>
+      </nav>
+
+      <div class="px-3 pb-3 pt-2">
+        <div class="rounded-md p-3 mb-3" style="background: linear-gradient(135deg, rgba(204,120,92,0.12), rgba(204,120,92,0.04)); border: 1px solid rgba(204,120,92,0.35);">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-1.5 text-[11px] font-semibold" style="color: var(--accent);">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.5 7h7.5l-6 4.5 2.5 7-6.5-5-6.5 5 2.5-7-6-4.5h7.5z"/></svg>
+              <span>PRO AGENTS · INCLUDED</span>
+            </div>
+          </div>
+          <div class="flex items-center justify-between text-[10px]">
+            <span class="text-neutral-300">247 / 1,000 calls</span>
+            <span class="text-neutral-500">3 / 10 agents</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 px-2 py-2 mt-1 rounded-md hover:bg-neutral-900 cursor-pointer">
+          <div class="w-7 h-7 rounded text-white flex items-center justify-center text-xs font-semibold" style="background: var(--accent);">w</div>
+          <div class="flex-1 min-w-0">
+            <div class="text-sm text-neutral-200 truncate">welly</div>
+            <div class="text-[10px] text-neutral-500 truncate">Pro · welly's Inc.</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main content area -->
+    <main class="main-content">
+
+      <!-- Page header -->
+      <div class="page-header">
+        <div class="page-title">
+          <span class="breadcrumb">Quickstart</span>
+          <span class="text-neutral-700">›</span>
+          <h1>Marketing Trend Research</h1>
+          <span class="quality-badge">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            +47% vs chat
+          </span>
+        </div>
+        <div class="page-sub">Auto-generated from your chat with Claude</div>
+      </div>
+
+      <!-- Stepper (inline, Anthropic style) -->
+      <div class="stepper">
+        <div class="step done">
+          <div class="step-num">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <span>Create agent</span>
+          <span class="step-meta">POST /v1/agents</span>
+        </div>
+        <div class="step-divider"></div>
+        <div class="step done">
+          <div class="step-num">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <span>Configure environment</span>
+        </div>
+        <div class="step-divider"></div>
+        <div class="step active">
+          <div class="step-num">3</div>
+          <span>Start session</span>
+        </div>
+        <div class="step-divider"></div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <span>Integrate</span>
+        </div>
+      </div>
+
+      <!-- Two-column body -->
+      <div class="agent-body">
+
+        <!-- LEFT: Builder/run thread -->
+        <div class="builder-col">
+          <div class="builder-thread">
+
+            <!-- Run banner -->
+            <div class="run-banner" id="run-banner">
+              <span class="run-banner-dot"></span>
+              <span class="run-banner-text"><strong>Session #ag_01h82k completed</strong> — 12 sources cited, posted to Slack & Notion.</span>
+              <span class="run-banner-meta">47s · $0.04</span>
+            </div>
+
+            <!-- User message (imported) -->
+            <div class="msg" id="user-msg">
+              <div class="msg-avatar user">w</div>
+              <div class="msg-content">
+                <em>"Hey Claude — need this week's AI dev tool research. Same format as last week: top product launches, X / Reddit trends, what major players are shipping. I need to share this in our Monday standup."</em>
+                <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">— Imported from Claude.ai chat</div>
+              </div>
+            </div>
+
+            <!-- Agent response (the better quality output) -->
+            <div class="msg" id="agent-msg">
+              <div class="msg-avatar agent">✦</div>
+              <div class="msg-content">
+
+                <div class="result-eyebrow">Executive summary</div>
+                <div class="result-summary">
+                  3 major launches in agent tooling this week. <strong>Cursor 0.49</strong> drives the strongest dev productivity narrative (3-4× speedups in user reports). Consumer-side: pricing fatigue thread on r/ChatGPT hit 3.4k upvotes — flag for enterprise pricing planning.
+                </div>
+
+                <h2 class="result-h2">Top launches (scored by traction)</h2>
+                <table class="result-table">
+                  <thead><tr><th>Product</th><th>Highlight</th><th>Score</th><th>Sources</th></tr></thead>
+                  <tbody>
+                    <tr><td><strong>Cursor 0.49</strong></td><td>Parallel terminal agents</td><td><span class="score">9.2</span></td><td><a href="#">techcrunch ↗</a> · <a href="#">x.com ↗</a></td></tr>
+                    <tr><td><strong>Vercel v0 v3</strong></td><td>Full-stack scaffold + DB</td><td><span class="score">8.5</span></td><td><a href="#">vercel.com ↗</a></td></tr>
+                    <tr><td><strong>Replit Agent 2.0</strong></td><td>Auto PR + review</td><td><span class="score">8.0</span></td><td><a href="#">replit.com ↗</a></td></tr>
+                  </tbody>
+                </table>
+
+                <h2 class="result-h2">Trending discussions</h2>
+                <ul class="result-list">
+                  <li><strong>r/LocalLLaMA</strong> · Llama 4 8B beats GPT-4o on coding <span class="cite-pill">3.2k · +89%</span></li>
+                  <li><strong>X discourse</strong> · Claude Code vs Cursor agent debate <span class="cite-pill">12k impressions</span></li>
+                  <li><strong>r/ChatGPT</strong> · Pricing fatigue thread <span class="cite-pill">3.4k · -67%</span></li>
+                </ul>
+
+                <h2 class="result-h2">Recommended for Monday standup</h2>
+                <ul class="result-list">
+                  <li>Lead with <strong>Cursor parallel terminals</strong> — most concrete dev productivity story</li>
+                  <li>Flag pricing fatigue for enterprise pricing planning</li>
+                </ul>
+
+                <div class="result-footer">
+                  <span class="ok">Posted to <strong>#marketing</strong> in Slack</span>
+                  <span class="ok">Saved to <strong>/Marketing/Trends/W15</strong> in Notion</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Recurring CTA -->
+            <div class="recurring-cta" id="recurring-cta">
+              <div class="recurring-cta-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#cc785c" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              </div>
+              <div class="recurring-cta-text">
+                <div class="head">Run this every Monday automatically?</div>
+                <div class="sub">Same input, same tools — fresh data, posted before your standup.</div>
+              </div>
+              <a class="recurring-cta-btn" id="schedule-btn" onclick="document.body.classList.add('modal-open')">Schedule recurring →</a>
+            </div>
+
+          </div>
+
+          <!-- Composer -->
+          <div class="composer-wrap">
+            <div class="composer">
+              <div class="composer-input">Describe your agent or refine this one...</div>
+              <div class="composer-row">
+                <div class="composer-tools">
+                  <span>+ Attach</span>
+                  <span>⚙ Tools</span>
+                </div>
+                <div class="composer-send">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: YAML config card -->
+        <div class="yaml-col">
+          <div class="yaml-card" id="yaml-card">
+
+            <div class="yaml-card-header">
+              <div class="yaml-card-title">
+                <span class="back">←</span>
+                <h3>Marketing Trend Research</h3>
+                <span class="pill">Auto-generated</span>
+              </div>
+              <button class="yaml-use-btn">Use this template</button>
+            </div>
+
+            <div class="yaml-tabs">
+              <span class="yaml-tab active">YAML</span>
+              <span class="yaml-tab">JSON</span>
+            </div>
+
+            <div class="yaml-viewer">
+              <div class="yaml-line"><span class="yaml-num">1</span><span><span class="yaml-key">name</span>: marketing-trend-research</span></div>
+              <div class="yaml-line"><span class="yaml-num">2</span><span><span class="yaml-key">description</span>: Weekly AI dev tool trends; cites sources; posts to Slack + Notion.</span></div>
+              <div class="yaml-line"><span class="yaml-num">3</span><span><span class="yaml-key">model</span>: <span class="yaml-string">claude-sonnet-4-6</span></span></div>
+              <div class="yaml-line"><span class="yaml-num">4</span><span><span class="yaml-key">system</span>: <span class="yaml-string">|-</span></span></div>
+              <div class="yaml-line"><span class="yaml-num">5</span><span style="padding-left: 18px;"><span class="yaml-text">Research weekly AI dev tool trends from</span></span></div>
+              <div class="yaml-line"><span class="yaml-num">6</span><span style="padding-left: 18px;"><span class="yaml-text">X / Reddit / TechCrunch. Score by traction.</span></span></div>
+              <div class="yaml-line"><span class="yaml-num">7</span><span style="padding-left: 18px;"><span class="yaml-text">Cite every claim with source URL.</span></span></div>
+              <div class="yaml-line"><span class="yaml-num">8</span><span style="padding-left: 18px;"><span class="yaml-text">Cross-check against last 3 weeks.</span></span></div>
+              <div class="yaml-line"><span class="yaml-num">9</span><span><span class="yaml-key">tools</span>:</span></div>
+              <div class="yaml-line"><span class="yaml-num">10</span><span style="padding-left: 12px;">- <span class="yaml-string">web_search</span></span></div>
+              <div class="yaml-line"><span class="yaml-num">11</span><span style="padding-left: 12px;">- <span class="yaml-string">notion</span></span></div>
+              <div class="yaml-line"><span class="yaml-num">12</span><span style="padding-left: 18px;"><span class="yaml-key">path</span>: <span class="yaml-string">/Marketing/Trends</span></span></div>
+              <div class="yaml-line"><span class="yaml-num">13</span><span style="padding-left: 12px;">- <span class="yaml-string">slack</span></span></div>
+              <div class="yaml-line"><span class="yaml-num">14</span><span style="padding-left: 18px;"><span class="yaml-key">channel</span>: <span class="yaml-string">#marketing</span></span></div>
+              <div class="yaml-line"><span class="yaml-num">15</span><span><span class="yaml-comment"># schedule set in step 4</span></span></div>
+              <div class="yaml-line"><span class="yaml-num">16</span><span><span class="yaml-key">metadata</span>:</span></div>
+              <div class="yaml-line"><span class="yaml-num">17</span><span style="padding-left: 12px;"><span class="yaml-key">imported_from</span>: <span class="yaml-string">claude.ai/chat</span></span></div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- Notes panel -->
+    <aside class="notes-panel" id="notes-panel">
+      <div class="notes-panel-eyebrow">Design Notes</div>
+      <div class="notes-panel-title">Step 2 — See the lift, then schedule</div>
+      <p class="notes-panel-sub">Hover a function below to see what it points to in the UI.</p>
+
+      <div class="notes-intro">
+        <div class="intro-block">
+          <div class="intro-label">Problem</div>
+          <p class="intro-text">"Try the API" with no proof point converts poorly. Users won't set up Agents, billing, or tools <strong>before they've felt the value</strong>.</p>
+        </div>
+        <div class="intro-block">
+          <div class="intro-label">Feature</div>
+          <p class="intro-text">Run the agent once <strong>with the user's own input</strong>, surface the quality lift (citations, structure, tool execution), then offer to schedule it as a recurring job.</p>
+        </div>
+      </div>
+
+      <div class="note" data-target="#user-msg">
+        <div class="note-label">Input continuity</div>
+        <h4 class="note-title">User's chat carried forward</h4>
+        <p class="note-body">The exact request from Claude.ai is the agent's first input — zero context loss.</p>
+      </div>
+
+      <div class="note" data-target="#agent-msg">
+        <div class="note-label">Quality lift demo</div>
+        <h4 class="note-title">Show the differential, not the pitch</h4>
+        <p class="note-body">Citations, scored traction, cross-checks, and tool execution side-by-side with the chat baseline.</p>
+      </div>
+
+      <div class="note" data-target="#yaml-card">
+        <div class="note-label">Config transparency</div>
+        <h4 class="note-title">YAML always visible (right pane)</h4>
+        <p class="note-body">Power users can audit / edit; everyone else can ignore — both audiences served.</p>
+      </div>
+
+      <div class="note" data-target="#recurring-cta">
+        <div class="note-label">Conversion timing</div>
+        <h4 class="note-title">Schedule offer comes after the lift</h4>
+        <p class="note-body">User has felt the quality + speed wins — "do this every week" is the obvious yes.</p>
+      </div>
+
+    </aside>
+
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-backdrop" onclick="document.body.classList.remove('modal-open')"></div>
+  <div class="convert-modal">
+    <div class="modal-eyebrow">Schedule recurring</div>
+    <h2 class="modal-title">Marketing Trend Research</h2>
+    <p class="modal-sub">Two upgrades over a chat — and your subscription already covers the recurring runs.</p>
+
+    <div class="modal-section">
+      <div class="modal-section-label">
+        <span>Cadence</span>
+        <span class="detected-pill">Detected</span>
+      </div>
+      <div class="modal-section-value">Every Monday · 9:00 AM</div>
+      <div class="modal-section-meta">Matches your pattern: W11–W15 all on Mondays.</div>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-section-label">Cost</div>
+      <div class="cost-free">Free — included in your Pro subscription</div>
+      <div class="modal-section-meta">1st of 10 included agents · 1,000 calls / month</div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="document.body.classList.remove('modal-open')">Maybe later</button>
+      <a href="index.html" class="btn-primary">
+        Continue in Console
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+      </a>
+    </div>
+  </div>
+
+  <svg id="connector-svg"></svg>
+
+  <button class="anno-toggle" id="anno-toggle">
+    <span class="dot"></span>
+    <span id="anno-toggle-label">Hide design notes</span>
+  </button>
+
+  <script>
+    const body = document.body;
+    const toggle = document.getElementById('anno-toggle');
+    const toggleLabel = document.getElementById('anno-toggle-label');
+    const svg = document.getElementById('connector-svg');
+
+    function ensureSvgSize() {
+      const docW = document.documentElement.scrollWidth;
+      const docH = document.documentElement.scrollHeight;
+      svg.setAttribute('width', docW);
+      svg.setAttribute('height', docH);
+      svg.setAttribute('viewBox', `0 0 ${docW} ${docH}`);
+    }
+
+    function drawConnector(note) {
+      ensureSvgSize();
+      svg.innerHTML = '';
+      const target = document.querySelector(note.dataset.target);
+      if (!target) return;
+      target.classList.add('target-highlight');
+
+      const tRect = target.getBoundingClientRect();
+      const nRect = note.getBoundingClientRect();
+      const sx = window.scrollX, sy = window.scrollY;
+
+      // Note end point — middle of left edge
+      const ax = nRect.left + sx - 4;
+      const ay = nRect.top + sy + nRect.height / 2;
+
+      // Target start point — slightly OUTSIDE right edge (past highlight glow), y aligned with note
+      const tTop = tRect.top + sy;
+      const tBottom = tRect.bottom + sy;
+      const tx = tRect.right + sx + 5;
+      const ty = Math.max(tTop + 12, Math.min(tBottom - 12, ay));
+
+      const dx = ax - tx;
+      const dy = ay - ty;
+
+      // For long horizontal spans, arc UP over middle content (clamped to viewport top)
+      const longSpan = dx > 350;
+      let cp1x, cp1y, cp2x, cp2y;
+      if (longSpan) {
+        const arcLift = Math.max(50, Math.min(110, Math.abs(dy) + 40));
+        const minY = sy + 60;
+        cp1x = tx + dx * 0.3;
+        cp1y = Math.max(minY, ty - arcLift);
+        cp2x = tx + dx * 0.7;
+        cp2y = Math.max(minY, ay - arcLift);
+      } else {
+        cp1x = tx + dx * 0.55;
+        cp1y = ty;
+        cp2x = tx + dx * 0.45;
+        cp2y = ay;
+      }
+
+      const ns = 'http://www.w3.org/2000/svg';
+      const path = document.createElementNS(ns, 'path');
+      path.setAttribute('d', `M ${tx} ${ty} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${ax} ${ay}`);
+      path.setAttribute('class', 'connector-line active');
+      svg.appendChild(path);
+
+      // Halo behind dot for visibility on busy backgrounds
+      const halo = document.createElementNS(ns, 'circle');
+      halo.setAttribute('cx', tx);
+      halo.setAttribute('cy', ty);
+      halo.setAttribute('r', 6);
+      halo.setAttribute('class', 'connector-dot-halo active');
+      svg.appendChild(halo);
+
+      const dot = document.createElementNS(ns, 'circle');
+      dot.setAttribute('cx', tx);
+      dot.setAttribute('cy', ty);
+      dot.setAttribute('r', 4);
+      dot.setAttribute('class', 'connector-dot active');
+      svg.appendChild(dot);
+    }
+
+    function clearConnector() {
+      svg.innerHTML = '';
+      document.querySelectorAll('.target-highlight').forEach(el => el.classList.remove('target-highlight'));
+    }
+
+    document.querySelectorAll('.note').forEach(note => {
+      note.addEventListener('mouseenter', () => drawConnector(note));
+      note.addEventListener('mouseleave', clearConnector);
+    });
+
+    toggle.addEventListener('click', () => {
+      body.classList.toggle('notes-hidden');
+      toggleLabel.textContent = body.classList.contains('notes-hidden')
+        ? 'Show design notes' : 'Hide design notes';
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Claude Console · Pro Agents</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --sidebar: #0f0f0f;
+      --notes-bg: #131313;
+      --card: #141414;
+      --card-hover: #1a1a1a;
+      --border: #262626;
+      --border-soft: #1f1f1f;
+      --text: #e5e5e5;
+      --text-muted: #8a8a8a;
+      --text-dim: #5a5a5a;
+      --accent: #cc785c;
+    }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      min-width: 1500px;
+    }
+    .serif { font-family: 'Source Serif 4', Georgia, serif; letter-spacing: -0.01em; }
+    .sidebar-link {
+      display: flex; align-items: center; gap: 10px;
+      padding: 5px 10px 5px 28px; border-radius: 6px;
+      color: #9a9a9a; font-size: 13px;
+      cursor: pointer;
+    }
+    .sidebar-link:hover { background: #1a1a1a; color: #fff; }
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 6px 10px; color: #d4d4d4; font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .chevron { font-size: 10px; opacity: 0.6; }
+
+    .scenario-bar {
+      position: fixed; top: 0; left: 0; right: 0;
+      background: rgba(15,15,15,0.95); backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border-soft);
+      padding: 6px 16px;
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 11px; color: #888;
+      z-index: 100;
+    }
+    .scenario-step {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 3px 10px; border-radius: 12px;
+      cursor: pointer; text-decoration: none;
+    }
+    .scenario-step.active { background: var(--accent); color: white; font-weight: 500; }
+    .scenario-step.done { color: #d4d4d4; }
+    .scenario-step .num {
+      width: 16px; height: 16px; border-radius: 8px;
+      background: rgba(255,255,255,0.1);
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 600;
+    }
+    .scenario-step.active .num { background: rgba(255,255,255,0.25); }
+
+    body { padding-top: 32px; }
+
+    .agent-card {
+      background: var(--card);
+      border: 1px solid var(--border-soft);
+      border-radius: 10px;
+      padding: 18px 20px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .agent-card:hover {
+      background: var(--card-hover);
+      border-color: var(--border);
+      transform: translateY(-1px);
+    }
+
+    /* ===== NOTES PANEL (right side) ===== */
+    .notes-panel {
+      width: 340px;
+      background: var(--notes-bg);
+      border-left: 1px solid var(--border-soft);
+      padding: 28px 22px 60px;
+      position: sticky;
+      top: 32px;
+      align-self: flex-start;
+      height: calc(100vh - 32px);
+      overflow-y: auto;
+      flex-shrink: 0;
+      z-index: 50;
+    }
+    body.notes-hidden .notes-panel { display: none; }
+
+    .notes-panel-eyebrow {
+      font-size: 10px; font-weight: 600;
+      letter-spacing: 1.6px;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .notes-panel-title {
+      font-size: 16px; font-weight: 600;
+      color: #fff; margin-bottom: 6px;
+      letter-spacing: -0.01em;
+    }
+    .notes-panel-sub {
+      font-size: 12px; color: var(--text-muted);
+      line-height: 1.55;
+      margin-bottom: 24px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--border-soft);
+    }
+
+    .note {
+      background: #1a1a1a;
+      border: 1px solid rgba(38,38,38,0.5);
+      border-left: 2px solid rgba(204,120,92,0.35);
+      border-radius: 8px;
+      padding: 14px 16px 15px;
+      margin-bottom: 12px;
+      opacity: 0.42;
+      transition: opacity 0.25s ease, border-color 0.25s ease, background 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+      cursor: pointer;
+    }
+    .note:hover {
+      opacity: 1;
+      border-color: var(--border);
+      border-left-color: var(--accent);
+      background: #1c1c1c;
+      transform: translateX(-3px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.45), 0 0 0 1px rgba(204,120,92,0.06);
+    }
+    .note-label {
+      display: inline-block;
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 1.2px;
+      color: var(--accent);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+    .note-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 7px;
+      line-height: 1.4;
+      letter-spacing: -0.005em;
+    }
+    .note-body {
+      font-size: 12px;
+      color: #a8a8a8;
+      line-height: 1.55;
+    }
+    /* Intro block */
+    .notes-intro {
+      background: #1a1a1a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    .intro-block + .intro-block {
+      margin-top: 14px; padding-top: 14px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+    .intro-label {
+      font-size: 9px; font-weight: 700;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 6px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .intro-label::before {
+      content: '';
+      width: 4px; height: 4px;
+      border-radius: 2px; background: var(--accent);
+    }
+    .intro-text {
+      font-size: 12.5px;
+      color: #e5e5e5;
+      line-height: 1.55;
+    }
+    .intro-text strong { color: #fff; font-weight: 600; }
+
+    /* SVG connector layer */
+    #connector-svg {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 49;
+    }
+    .connector-line {
+      stroke: var(--accent);
+      stroke-width: 1.2;
+      stroke-dasharray: 4 4;
+      fill: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .connector-line.active { opacity: 0.75; }
+    .connector-dot { fill: var(--accent); opacity: 0; transition: opacity 0.2s; }
+    .connector-dot.active { opacity: 1; }
+    .connector-dot-halo { fill: var(--bg); opacity: 0; }
+    .connector-dot-halo.active { opacity: 1; }
+
+    /* Highlight target element on note hover */
+    .target-highlight {
+      box-shadow: 0 0 0 1px var(--accent), 0 0 0 4px rgba(204,120,92,0.15) !important;
+      transition: box-shadow 0.2s ease;
+    }
+
+    /* Toggle */
+    .anno-toggle {
+      position: fixed;
+      bottom: 24px; right: 24px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: #c5c5c5;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 12px; font-weight: 500;
+      display: flex; align-items: center; gap: 8px;
+      cursor: pointer;
+      z-index: 200;
+      transition: all 0.15s;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .anno-toggle:hover { border-color: var(--accent); color: #fff; }
+    .anno-toggle .dot {
+      width: 6px; height: 6px;
+      border-radius: 3px;
+      background: var(--accent);
+    }
+    body.notes-hidden .anno-toggle .dot { background: #555; }
+  </style>
+</head>
+<body>
+
+  <!-- ======= SCENARIO NAV ======= -->
+  <div class="scenario-bar">
+    <div class="flex items-center gap-2">
+      <span class="text-[10px] uppercase tracking-wider text-neutral-500 mr-2">PM Prototype</span>
+      <a href="claude-chat.html" class="scenario-step done">
+        <span class="num">1</span><span>Claude.ai chat</span>
+      </a>
+      <span class="text-neutral-700">→</span>
+      <a href="funnel.html" class="scenario-step done">
+        <span class="num">2</span><span>Funnel moment</span>
+      </a>
+      <span class="text-neutral-700">→</span>
+      <span class="scenario-step active">
+        <span class="num">3</span><span>Console · Pro Agents</span>
+      </span>
+    </div>
+    <div class="text-[10px] text-neutral-500">Anthropic · API Growth PM prototype</div>
+  </div>
+
+  <div class="flex min-h-screen">
+
+    <!-- ======= SIDEBAR ======= -->
+    <aside class="w-[230px] flex flex-col" style="background: var(--sidebar); border-right: 1px solid var(--border-soft); height: calc(100vh - 32px); position: sticky; top: 32px;">
+
+      <div class="px-4 pt-4 pb-3">
+        <div class="flex items-center justify-between mb-4">
+          <div class="serif text-[17px] font-medium text-white">Claude Console</div>
+          <button class="text-neutral-500 hover:text-neutral-300">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4v16m6-16v16"/></svg>
+          </button>
+        </div>
+        <button class="w-full flex items-center justify-between px-3 py-2 rounded-md text-sm hover:bg-neutral-900" style="background: #141414; border: 1px solid var(--border);">
+          <span class="flex items-center gap-2">
+            <span class="text-amber-500">⬢</span>
+            <span>Default</span>
+          </span>
+          <span class="text-neutral-500 text-xs">▾</span>
+        </button>
+      </div>
+
+      <nav class="flex-1 px-2 overflow-y-auto">
+
+        <div class="mb-2">
+          <div class="section-header">
+            <span class="flex items-center gap-2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+              <span>Build</span>
+            </span>
+            <span class="chevron">▾</span>
+          </div>
+          <div class="sidebar-link">Workbench</div>
+          <div class="sidebar-link">Files</div>
+          <div class="sidebar-link">Skills</div>
+          <div class="sidebar-link">Batches</div>
+        </div>
+
+        <div class="mb-2">
+          <div class="section-header">
+            <span class="flex items-center gap-2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              <span>Managed Agents</span>
+            </span>
+            <span class="chevron">▾</span>
+          </div>
+          <div class="sidebar-link">Quickstart</div>
+          <div class="sidebar-link">Agents</div>
+          <div class="sidebar-link">Sessions</div>
+          <div class="sidebar-link">Environments</div>
+          <div class="sidebar-link">Credential vaults</div>
+          <div class="sidebar-link justify-between">
+            <span>Memory stores</span>
+            <span class="text-[9px] px-1.5 py-0.5 rounded font-medium" style="background: rgba(96,165,250,0.15); color: #93c5fd;">New</span>
+          </div>
+        </div>
+
+        <div class="mb-2">
+          <div class="section-header">
+            <span class="flex items-center gap-2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+              <span>Analytics</span>
+            </span>
+            <span class="chevron">▾</span>
+          </div>
+          <div class="sidebar-link">Usage</div>
+          <div class="sidebar-link">Caching</div>
+        </div>
+
+      </nav>
+
+      <div class="px-3 pb-3 pt-2">
+
+        <div class="rounded-md p-3 mb-3" id="pro-agents-card" style="background: linear-gradient(135deg, rgba(204,120,92,0.12), rgba(204,120,92,0.04)); border: 1px solid rgba(204,120,92,0.35);">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-1.5 text-[11px] font-semibold" style="color: var(--accent);">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.5 7h7.5l-6 4.5 2.5 7-6.5-5-6.5 5 2.5-7-6-4.5h7.5z"/></svg>
+              <span>PRO AGENTS · INCLUDED</span>
+            </div>
+            <span class="text-[9px] text-neutral-500">26d left</span>
+          </div>
+          <div class="w-full h-1 rounded-full overflow-hidden mb-2" style="background: rgba(255,255,255,0.06);">
+            <div style="width: 24.7%; height: 100%; background: var(--accent);"></div>
+          </div>
+          <div class="flex items-center justify-between text-[10px]">
+            <span class="text-neutral-300">247 / 1,000 calls</span>
+            <span class="text-neutral-500">3 / 10 agents</span>
+          </div>
+          <a class="block mt-2 text-[10px] underline cursor-pointer text-neutral-400 hover:text-neutral-200">Upgrade for Team →</a>
+        </div>
+
+        <div class="sidebar-link" style="font-size: 13px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2zM22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          <span>Documentation</span>
+        </div>
+
+        <div class="flex items-center gap-2 px-2 py-2 mt-1 rounded-md hover:bg-neutral-900 cursor-pointer" style="border-top: 1px solid var(--border-soft);">
+          <div class="w-7 h-7 rounded text-white flex items-center justify-center text-xs font-semibold" style="background: var(--accent);">w</div>
+          <div class="flex-1 min-w-0">
+            <div class="text-sm text-neutral-200 truncate">welly</div>
+            <div class="text-[10px] text-neutral-500 truncate">Pro · welly's Inc.</div>
+          </div>
+          <span class="text-neutral-600 text-xs">▾</span>
+        </div>
+
+      </div>
+    </aside>
+
+    <!-- ======= MAIN ======= -->
+    <main class="flex-1 flex flex-col min-w-0">
+
+      <div class="flex-1 flex flex-col items-center px-10 pt-[60px] pb-12">
+        <div class="w-full max-w-[920px] flex flex-col items-center">
+
+          <h1 class="serif text-[44px] font-normal mb-4 text-neutral-100 text-center" style="letter-spacing: -0.02em;">Welcome back, welly</h1>
+          <p class="text-[14px] text-neutral-500 mb-8 text-center">Pick up where you left off, or browse agents built for your team.</p>
+
+          <div class="flex items-center gap-3 rounded-full pl-5 pr-1 py-1 mb-12" id="sub-banner" style="background: linear-gradient(135deg, rgba(204,120,92,0.10), rgba(204,120,92,0.02)); border: 1px solid rgba(204,120,92,0.35);">
+            <span class="text-[13px]" style="color: var(--accent);">✦</span>
+            <span class="text-[13px] text-neutral-200">
+              <strong style="color: var(--accent); font-weight:600;">Pro Agents</strong> enabled — 10 agents · 1,000 calls/month included with your subscription
+            </span>
+            <button class="bg-white text-black text-[12px] font-medium px-4 py-1.5 rounded-full hover:bg-neutral-200 transition">Manage plan</button>
+          </div>
+
+          <div class="grid grid-cols-3 gap-3 w-full mb-3">
+            <button class="rounded-lg py-5 px-6 hover:bg-[#1a1a1a] transition flex items-center justify-center gap-2.5" style="background: var(--card); border: 1px solid var(--border);">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="text-neutral-300 flex-shrink-0"><circle cx="12" cy="12" r="3"/><circle cx="5" cy="6" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="19" cy="18" r="2"/><line x1="12" y1="9" x2="6" y2="7"/><line x1="12" y1="9" x2="18" y2="7"/><line x1="12" y1="15" x2="6" y2="17"/><line x1="12" y1="15" x2="18" y2="17"/></svg>
+              <span class="text-[13px] font-medium text-neutral-200">Get started with agents</span>
+            </button>
+            <button class="rounded-lg py-5 px-6 hover:bg-[#1a1a1a] transition flex items-center justify-center gap-2.5" style="background: var(--card); border: 1px solid var(--border);">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="text-neutral-300 flex-shrink-0"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span class="text-[13px] font-medium text-neutral-200">Generate a prompt</span>
+            </button>
+            <button class="rounded-lg py-5 px-6 hover:bg-[#1a1a1a] transition flex items-center justify-center gap-2.5" style="background: var(--card); border: 1px solid var(--border);">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="text-neutral-300 flex-shrink-0"><circle cx="8" cy="15" r="4"/><line x1="10.85" y1="12.15" x2="19" y2="4"/><line x1="18" y1="5" x2="20" y2="7"/><line x1="15" y1="8" x2="17" y2="10"/></svg>
+              <span class="text-[13px] font-medium text-neutral-200">Get API Key</span>
+            </button>
+          </div>
+
+          <div class="w-full mt-16" id="marketplace-section">
+            <div class="flex items-end justify-between mb-1">
+              <h2 class="serif text-[26px] font-normal text-neutral-100">Built for your team</h2>
+              <a class="text-[12px] text-neutral-500 hover:text-neutral-200 cursor-pointer">View all 200+ agents →</a>
+            </div>
+            <p class="text-[13px] text-neutral-500 mb-8">Pre-built agents organized by job function. One click to install.</p>
+
+            <div class="flex items-center gap-6 mb-6 pb-3 border-b border-neutral-900 text-[12px]">
+              <span class="text-white font-medium relative pb-2" style="border-bottom: 2px solid var(--accent); margin-bottom: -13px;">All</span>
+              <span class="text-neutral-500 hover:text-neutral-200 cursor-pointer">Marketing</span>
+              <span class="text-neutral-500 hover:text-neutral-200 cursor-pointer">Product</span>
+              <span class="text-neutral-500 hover:text-neutral-200 cursor-pointer">Engineering</span>
+              <span class="text-neutral-500 hover:text-neutral-200 cursor-pointer">Design</span>
+              <span class="text-neutral-500 hover:text-neutral-200 cursor-pointer">Sales</span>
+              <span class="text-neutral-500 hover:text-neutral-200 cursor-pointer">Research</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3" id="marketplace-grid">
+
+              <div class="agent-card" id="first-agent-card">
+                <div class="flex items-start justify-between mb-3">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center text-[20px]" style="background: rgba(244,114,182,0.10);">📈</div>
+                    <div>
+                      <div class="text-[14px] font-semibold text-neutral-100">Weekly Trend Researcher</div>
+                      <div class="text-[11px] text-neutral-500 mt-0.5">Marketing</div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-5 h-5 inline-flex items-center justify-center rounded text-white text-[9px] font-bold" style="background:#4a154b;">S</span>
+                    <span class="w-5 h-5 inline-flex items-center justify-center rounded bg-white text-[9px] font-bold text-black">N</span>
+                  </div>
+                </div>
+                <p class="text-[12px] text-neutral-400 leading-relaxed">Auto-scans X, Reddit & TechCrunch every Monday. Drops summary in Slack.</p>
+              </div>
+
+              <div class="agent-card">
+                <div class="flex items-start justify-between mb-3">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center text-[20px]" style="background: rgba(96,165,250,0.10);">📋</div>
+                    <div>
+                      <div class="text-[14px] font-semibold text-neutral-100">Spec → PRD Generator</div>
+                      <div class="text-[11px] text-neutral-500 mt-0.5">Product</div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-5 h-5 inline-flex items-center justify-center rounded text-white text-[9px] font-bold" style="background:#5e6ad2;">L</span>
+                    <span class="w-5 h-5 inline-flex items-center justify-center rounded bg-white text-[9px] font-bold text-black">N</span>
+                  </div>
+                </div>
+                <p class="text-[12px] text-neutral-400 leading-relaxed">Drop a Linear issue, get a full PRD in Notion with stories & metrics.</p>
+              </div>
+
+              <div class="agent-card">
+                <div class="flex items-start justify-between mb-3">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center text-[20px]" style="background: rgba(52,211,153,0.10);">🔍</div>
+                    <div>
+                      <div class="text-[14px] font-semibold text-neutral-100">PR Reviewer Pro</div>
+                      <div class="text-[11px] text-neutral-500 mt-0.5">Engineering</div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-5 h-5 inline-flex items-center justify-center rounded text-white text-[9px] font-bold" style="background:#181717;">G</span>
+                    <span class="w-5 h-5 inline-flex items-center justify-center rounded text-white text-[9px] font-bold" style="background:#4a154b;">S</span>
+                  </div>
+                </div>
+                <p class="text-[12px] text-neutral-400 leading-relaxed">Auto-reviews GitHub PRs for security, performance & SOLID — comments inline.</p>
+              </div>
+
+              <div class="agent-card">
+                <div class="flex items-start justify-between mb-3">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center text-[20px]" style="background: rgba(167,139,250,0.10);">🎨</div>
+                    <div>
+                      <div class="text-[14px] font-semibold text-neutral-100">Figma → Notion Sync</div>
+                      <div class="text-[11px] text-neutral-500 mt-0.5">Design</div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-5 h-5 inline-flex items-center justify-center rounded text-white text-[9px] font-bold" style="background:#f24e1e;">F</span>
+                    <span class="w-5 h-5 inline-flex items-center justify-center rounded bg-white text-[9px] font-bold text-black">N</span>
+                  </div>
+                </div>
+                <p class="text-[12px] text-neutral-400 leading-relaxed">Push Figma frames + design tokens to Notion design system docs.</p>
+              </div>
+
+              <div class="agent-card">
+                <div class="flex items-start justify-between mb-3">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center text-[20px]" style="background: rgba(251,191,36,0.10);">💰</div>
+                    <div>
+                      <div class="text-[14px] font-semibold text-neutral-100">Daily Revenue Brief</div>
+                      <div class="text-[11px] text-neutral-500 mt-0.5">Sales</div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-5 h-5 inline-flex items-center justify-center rounded text-white text-[9px] font-bold" style="background:#635bff;">$</span>
+                    <span class="w-5 h-5 inline-flex items-center justify-center rounded text-white text-[9px] font-bold" style="background:#4a154b;">S</span>
+                  </div>
+                </div>
+                <p class="text-[12px] text-neutral-400 leading-relaxed">Stripe + GA → Slack daily 9am: MRR, churn, top channels, anomalies.</p>
+              </div>
+
+              <div class="agent-card">
+                <div class="flex items-start justify-between mb-3">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center text-[20px]" style="background: rgba(248,113,113,0.10);">🔬</div>
+                    <div>
+                      <div class="text-[14px] font-semibold text-neutral-100">Topic Deep Dive → PPT</div>
+                      <div class="text-[11px] text-neutral-500 mt-0.5">Research</div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-5 h-5 inline-flex items-center justify-center rounded text-white text-[9px] font-bold" style="background:#1a73e8;">W</span>
+                    <span class="w-5 h-5 inline-flex items-center justify-center rounded text-white text-[9px] font-bold" style="background:#d24726;">P</span>
+                  </div>
+                </div>
+                <p class="text-[12px] text-neutral-400 leading-relaxed">Give a topic, get a 15-slide deck with sources, charts & exec summary.</p>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <footer class="py-4 px-8 flex justify-center gap-6 text-[11px] text-neutral-500">
+        <a class="hover:text-neutral-300 cursor-pointer flex items-center gap-1">API status <span class="text-[9px]">↗</span></a>
+        <a class="hover:text-neutral-300 cursor-pointer flex items-center gap-1">Help &amp; support <span class="text-[9px]">↗</span></a>
+        <a class="hover:text-neutral-300 cursor-pointer">Feedback</a>
+      </footer>
+
+    </main>
+
+    <!-- ======= NOTES PANEL (right) ======= -->
+    <aside class="notes-panel" id="notes-panel">
+      <div class="notes-panel-eyebrow">Design Notes</div>
+      <div class="notes-panel-title">Step 3 — Activate as subscriber</div>
+      <p class="notes-panel-sub">Hover a function below to see what it points to in the UI.</p>
+
+      <div class="notes-intro">
+        <div class="intro-block">
+          <div class="intro-label">Problem</div>
+          <p class="intro-text">Console is built for developers buying credits. Non-developer subscribers (PM, marketing, ops) face <strong>billing friction</strong> and don't see agents relevant to their work.</p>
+        </div>
+        <div class="intro-block">
+          <div class="intro-label">Feature</div>
+          <p class="intro-text">Bundle Agent API into the Pro subscription, organize the Marketplace by <strong>job function</strong>, and pair each agent with the tools it needs.</p>
+        </div>
+      </div>
+
+      <div class="note" data-target="#sub-banner">
+        <div class="note-label">Activation</div>
+        <h4 class="note-title">"Already included" replaces "buy credits"</h4>
+        <p class="note-body">Subscription covers 1k calls — zero credit-card friction.</p>
+      </div>
+
+      <div class="note" data-target="#pro-agents-card">
+        <div class="note-label">Monetization</div>
+        <h4 class="note-title">Subscription bundles Agent API</h4>
+        <p class="note-body">10 agents + 1k calls/mo included; overage upgrades to Team.</p>
+      </div>
+
+      <div class="note" data-target="#marketplace-section">
+        <div class="note-label">Discovery · TAM</div>
+        <h4 class="note-title">Organized by job function, not tech</h4>
+        <p class="note-body">Categories: Marketing / Product / Eng / Design / Sales / Research.</p>
+      </div>
+
+      <div class="note" data-target="#first-agent-card">
+        <div class="note-label">Decision fatigue</div>
+        <h4 class="note-title">Tools sold WITH agents</h4>
+        <p class="note-body">Each card shows its tool integrations up-front.</p>
+      </div>
+
+    </aside>
+
+  </div>
+
+  <!-- SVG connector layer -->
+  <svg id="connector-svg"></svg>
+
+  <!-- Toggle -->
+  <button class="anno-toggle" id="anno-toggle">
+    <span class="dot"></span>
+    <span id="anno-toggle-label">Hide design notes</span>
+  </button>
+
+  <script>
+    const body = document.body;
+    const toggle = document.getElementById('anno-toggle');
+    const toggleLabel = document.getElementById('anno-toggle-label');
+    const svg = document.getElementById('connector-svg');
+
+    function ensureSvgSize() {
+      const docW = document.documentElement.scrollWidth;
+      const docH = document.documentElement.scrollHeight;
+      svg.setAttribute('width', docW);
+      svg.setAttribute('height', docH);
+      svg.setAttribute('viewBox', `0 0 ${docW} ${docH}`);
+    }
+
+    function drawConnector(note) {
+      ensureSvgSize();
+      svg.innerHTML = '';
+      const target = document.querySelector(note.dataset.target);
+      if (!target) return;
+
+      target.classList.add('target-highlight');
+
+      const tRect = target.getBoundingClientRect();
+      const nRect = note.getBoundingClientRect();
+      const sx = window.scrollX, sy = window.scrollY;
+
+      const ax = nRect.left + sx - 4;
+      const ay = nRect.top + sy + nRect.height / 2;
+
+      const tTop = tRect.top + sy;
+      const tBottom = tRect.bottom + sy;
+      const tx = tRect.right + sx + 5;
+      const ty = Math.max(tTop + 12, Math.min(tBottom - 12, ay));
+
+      const dx = ax - tx;
+      const dy = ay - ty;
+      const longSpan = dx > 350;
+      let cp1x, cp1y, cp2x, cp2y;
+      if (longSpan) {
+        const arcLift = Math.max(50, Math.min(110, Math.abs(dy) + 40));
+        const minY = sy + 60;
+        cp1x = tx + dx * 0.3;
+        cp1y = Math.max(minY, ty - arcLift);
+        cp2x = tx + dx * 0.7;
+        cp2y = Math.max(minY, ay - arcLift);
+      } else {
+        cp1x = tx + dx * 0.55;
+        cp1y = ty;
+        cp2x = tx + dx * 0.45;
+        cp2y = ay;
+      }
+
+      const ns = 'http://www.w3.org/2000/svg';
+      const path = document.createElementNS(ns, 'path');
+      path.setAttribute('d', `M ${tx} ${ty} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${ax} ${ay}`);
+      path.setAttribute('class', 'connector-line active');
+      svg.appendChild(path);
+
+      const halo = document.createElementNS(ns, 'circle');
+      halo.setAttribute('cx', tx);
+      halo.setAttribute('cy', ty);
+      halo.setAttribute('r', 6);
+      halo.setAttribute('class', 'connector-dot-halo active');
+      svg.appendChild(halo);
+
+      const dot = document.createElementNS(ns, 'circle');
+      dot.setAttribute('cx', tx);
+      dot.setAttribute('cy', ty);
+      dot.setAttribute('r', 4);
+      dot.setAttribute('class', 'connector-dot active');
+      svg.appendChild(dot);
+    }
+
+    function clearConnector() {
+      svg.innerHTML = '';
+      document.querySelectorAll('.target-highlight').forEach(el => el.classList.remove('target-highlight'));
+    }
+
+    document.querySelectorAll('.note').forEach(note => {
+      note.addEventListener('mouseenter', () => drawConnector(note));
+      note.addEventListener('mouseleave', clearConnector);
+    });
+
+    toggle.addEventListener('click', () => {
+      body.classList.toggle('notes-hidden');
+      toggleLabel.textContent = body.classList.contains('notes-hidden')
+        ? 'Show design notes' : 'Hide design notes';
+    });
+  </script>
+</body>
+</html>
