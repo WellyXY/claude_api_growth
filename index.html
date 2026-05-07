@@ -46,28 +46,35 @@
     .scenario-bar {
       position: fixed; top: 0; left: 0; right: 0;
       background: rgba(15,15,15,0.95); backdrop-filter: blur(8px);
-      border-bottom: 1px solid var(--border-soft);
-      padding: 6px 16px;
+      border-bottom: 1px solid var(--border);
+      padding: 12px 28px;
       display: flex; align-items: center; justify-content: space-between;
-      font-size: 11px; color: #888;
+      font-size: 13px; color: #888;
       z-index: 100;
     }
     .scenario-step {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 3px 10px; border-radius: 12px;
+      display: inline-flex; align-items: center; gap: 9px;
+      padding: 8px 16px; border-radius: 18px;
       cursor: pointer; text-decoration: none;
+      font-size: 13.5px; font-weight: 500;
+      transition: background 0.15s, color 0.15s;
     }
-    .scenario-step.active { background: var(--accent); color: white; font-weight: 500; }
-    .scenario-step.done { color: #d4d4d4; }
+    .scenario-step.active {
+      background: var(--accent); color: white; font-weight: 600;
+      box-shadow: 0 4px 12px rgba(204,120,92,0.3);
+    }
+    .scenario-step.done { color: #e5e5e5; }
+    .scenario-step.done:hover { color: #fff; background: rgba(255,255,255,0.04); }
     .scenario-step .num {
-      width: 16px; height: 16px; border-radius: 8px;
-      background: rgba(255,255,255,0.1);
+      width: 22px; height: 22px; border-radius: 11px;
+      background: rgba(255,255,255,0.10);
       display: inline-flex; align-items: center; justify-content: center;
-      font-size: 10px; font-weight: 600;
+      font-size: 12px; font-weight: 700;
     }
-    .scenario-step.active .num { background: rgba(255,255,255,0.25); }
+    .scenario-step.active .num { background: rgba(255,255,255,0.28); }
+    .scenario-arrow { color: #4a4a4a; font-size: 16px; }
 
-    body { padding-top: 32px; }
+    body { padding-top: 56px; }
 
     .agent-card {
       background: var(--card);
@@ -90,9 +97,9 @@
       border-left: 1px solid var(--border-soft);
       padding: 28px 22px 60px;
       position: sticky;
-      top: 32px;
+      top: 56px;
       align-self: flex-start;
-      height: calc(100vh - 32px);
+      height: calc(100vh - 56px);
       overflow-y: auto;
       flex-shrink: 0;
       z-index: 50;
@@ -249,27 +256,27 @@
 
   <!-- ======= SCENARIO NAV ======= -->
   <div class="scenario-bar">
-    <div class="flex items-center gap-2">
-      <span class="text-[10px] uppercase tracking-wider text-neutral-500 mr-2">PM Prototype</span>
+    <div class="flex items-center gap-3">
+      <span class="text-[11px] uppercase tracking-[0.15em] text-neutral-500 font-semibold mr-2">PM Prototype</span>
       <a href="claude-chat.html" class="scenario-step done">
         <span class="num">1</span><span>Claude.ai chat</span>
       </a>
-      <span class="text-neutral-700">→</span>
+      <span class="scenario-arrow">→</span>
       <a href="funnel.html" class="scenario-step done">
         <span class="num">2</span><span>Funnel moment</span>
       </a>
-      <span class="text-neutral-700">→</span>
+      <span class="scenario-arrow">→</span>
       <span class="scenario-step active">
         <span class="num">3</span><span>Console · Pro Agents</span>
       </span>
     </div>
-    <div class="text-[10px] text-neutral-500">Anthropic · API Growth PM prototype</div>
+    <div class="text-[11px] text-neutral-500">Anthropic · API Growth PM prototype</div>
   </div>
 
   <div class="flex min-h-screen">
 
     <!-- ======= SIDEBAR ======= -->
-    <aside class="w-[230px] flex flex-col" style="background: var(--sidebar); border-right: 1px solid var(--border-soft); height: calc(100vh - 32px); position: sticky; top: 32px;">
+    <aside class="w-[230px] flex flex-col" style="background: var(--sidebar); border-right: 1px solid var(--border-soft); height: calc(100vh - 56px); position: sticky; top: 56px;">
 
       <div class="px-4 pt-4 pb-3">
         <div class="flex items-center justify-between mb-4">
